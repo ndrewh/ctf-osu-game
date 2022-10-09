@@ -1,0 +1,95 @@
+diff --git a/examples/minisdl_audio.c b/examples/minisdl_audio.c
+index e2e2d3f..e40b711 100644
+--- a/examples/minisdl_audio.c
++++ b/examples/minisdl_audio.c
+@@ -8238,11 +8238,7 @@ COREAUDIO_CloseDevice(_THIS)
+                                           scope, bus, &callback,
+                                           sizeof(callback));
+ 
+-            #if MACOSX_COREAUDIO
+-            CloseComponent(SDLAUDIOHIDDEN->audioUnit);
+-            #else
+             AudioComponentInstanceDispose(SDLAUDIOHIDDEN->audioUnit);
+-            #endif
+ 
+             SDLAUDIOHIDDEN->audioUnitOpened = 0;
+         }
+@@ -8258,13 +8254,8 @@ prepare_audiounit(_THIS, const char *devname, int iscapture,
+ {
+     OSStatus result = noErr;
+     AURenderCallbackStruct callback;
+-#if MACOSX_COREAUDIO
+-    ComponentDescription desc;
+-    Component comp = NULL;
+-#else
+     AudioComponentDescription desc;
+     AudioComponent comp = NULL;
+-#endif
+     const AudioUnitElement output_bus = 0;
+     const AudioUnitElement input_bus = 1;
+     const AudioUnitElement bus = ((iscapture) ? input_bus : output_bus);
+@@ -8282,27 +8273,16 @@ prepare_audiounit(_THIS, const char *devname, int iscapture,
+     desc.componentType = kAudioUnitType_Output;
+     desc.componentManufacturer = kAudioUnitManufacturer_Apple;
+ 
+-#if MACOSX_COREAUDIO
+-    desc.componentSubType = kAudioUnitSubType_DefaultOutput;
+-    comp = FindNextComponent(NULL, &desc);
+-#else
+-    desc.componentSubType = kAudioUnitSubType_RemoteIO;
++    desc.componentSubType = kAudioUnitSubType_HALOutput;// kAudioUnitSubType_RemoteIO;
+     comp = AudioComponentFindNext(NULL, &desc);
+-#endif
+ 
+     if (comp == NULL) {
+         SDL_SetError("Couldn't find requested CoreAudio component");
+         return 0;
+     }
+ 
+-#if MACOSX_COREAUDIO
+-    result = OpenAComponent(comp, &SDLAUDIOHIDDEN->audioUnit);
+-    CHECK_RESULT("OpenAComponent");
+-#else
+-
+     result = AudioComponentInstanceNew(comp, &SDLAUDIOHIDDEN->audioUnit);
+     CHECK_RESULT("AudioComponentInstanceNew");
+-#endif
+ 
+     SDLAUDIOHIDDEN->audioUnitOpened = 1;
+ 
+@@ -16141,6 +16121,11 @@ open_audio_device(const char *devname, int iscapture,
+ 
+     return id + 1;
+ }
++const char *SDL_GetError() {
++    SDL_error *e = SDL_GetErrBuf();
++    return e->key;
++}
++
+ 
+ int
+ SDL_OpenAudio(SDL_AudioSpec * desired, SDL_AudioSpec * obtained)
+diff --git a/examples/minisdl_audio.h b/examples/minisdl_audio.h
+index e2bff7f..507ce51 100644
+--- a/examples/minisdl_audio.h
++++ b/examples/minisdl_audio.h
+@@ -852,7 +852,9 @@ typedef unsigned long uintptr_t;
+ #define _SDL_render_h
+ #define _SDL_gesture_c_h
+ #define _SDL_stdinc_h
+-static SDL_INLINE int SDL_SetError(const char *errstr, ...) { (void)errstr; return 1; }
++int printf(const char *format, ...);
++// static SDL_INLINE int SDL_SetError(const char *errstr, ...) { (void)errstr; printf(errstr, ##__VA_ARGS__); return 1; }
++#define SDL_SetError(err, ...) printf(err, ##__VA_ARGS__), -1
+ #define SDL_assert(a)
+ #define SDL_Error(e)
+ #define SDL_ASSERT_LEVEL 0
+@@ -2736,6 +2738,8 @@ extern DECLSPEC const char *SDLCALL SDL_GetCurrentAudioDriver(void);
+ extern DECLSPEC int SDLCALL SDL_OpenAudio(SDL_AudioSpec * desired,
+                                           SDL_AudioSpec * obtained);
+ 
++extern DECLSPEC const char *SDLCALL SDL_GetError(void);
++
+ typedef Uint32 SDL_AudioDeviceID;
+ 
+ extern DECLSPEC int SDLCALL SDL_GetNumAudioDevices(int iscapture);

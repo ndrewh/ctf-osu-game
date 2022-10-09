@@ -1,0 +1,6 @@
+[submodule "src/TinySoundFont"]
+	path = src/TinySoundFont
+	url = git@github.com:schellingb/TinySoundFont.git
+[submodule "glfw"]
+	path = glfw
+	url = https://github.com/glfw/glfw.git
