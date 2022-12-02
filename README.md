@@ -12,7 +12,7 @@ In this challenge, you can click notes which are (roughly) timed with music.
 There is flag checking logic implemented in an OpenGL shader. The checker consists
 of a set of VM programs which check some small property of the inputted sequence.
 
-Full writeup TBD.
+Full writeup [here](https://ctf.andrewh.tech/2022/buckeyectf-osu/).
 
 ```
 
